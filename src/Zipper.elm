@@ -25,35 +25,31 @@ type alias Zipper a =
 
 
 makeZipper : List a -> a -> List a -> Zipper a
-makeZipper previous current next =
-    { previous = previous, current = current, next = next }
+makeZipper =
+    -- maybe a better name is "sortZipper"
+    Zipper << reverse
 
 
 moveBackwards : Zipper a -> Maybe (Zipper a)
-moveBackwards zipper =
-    case init zipper.previous of
-        Nothing ->
+moveBackwards { previous, current, next } =
+    -- maybe we should make it impossible to give a zipper which is not sorted by `makeZipper`
+    case previous of
+        [] ->
             Nothing
 
-        Just choppedPrevious ->
-            Just <|
-                { previous = choppedPrevious
-                , current = withDefault zipper.current <| last zipper.previous
-                , next = zipper.current :: zipper.next
-                }
+        head :: tail ->
+            Just <| Zipper tail head <| current :: next
 
 
 moveForward : Zipper a -> Maybe (Zipper a)
 moveForward zipper =
-    map flipZipp << moveForward << flipZipp <| zipper
+    map flip << moveBackwards <| flip zipper
 
 
-flipZipp : Zipper a -> Zipper a
-flipZipp zipper =
-    { previous = reverse zipper.next
-    , current = zipper.current
-    , next = reverse zipper.previous
-    }
+flip : Zipper a -> Zipper a
+flip { previous, current, next } =
+    -- figure if next needs to be reversed
+    Zipper (reverse next) current <| reverse previous
 
 
 moveForwardTo : a -> Zipper a -> Maybe (Zipper a)
